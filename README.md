@@ -6,8 +6,8 @@ This checklist provides a step-by-step guide to building the Cointoss betting pl
 
 ## 1. Project Setup
 
--   [ ] Initialize Git repository and setup version control
--   [ ] Setup Java Spring Boot backend project structure
+-   [x] Initialize Git repository and setup version control
+-   [x] Setup Java Spring Boot backend project structure
 -   [ ] Setup frontend project (React, Vue, or preferred framework)
 -   [ ] Configure environment variables and secrets management
 
