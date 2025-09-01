@@ -12,42 +12,30 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "bets", schema = "cointoss")
+@Table(name = "bets")
 public class Bet {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
-    private Long id;
+    @Id @GeneratedValue
+    private UUID id;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "pool_id", nullable = false)
-    private BettingPool pool;
+    @ManyToOne
+    @JoinColumn(name = "cycle_id", nullable = false)
+    private BettingCycle cycle;
 
-    @NotNull
-    @Column(name = "amount", nullable = false, precision = 10, scale = 2)
+    @Enumerated(EnumType.STRING)
+    private BetDirection direction;
+
+    @Column(nullable = false, precision = 18, scale = 8)
     private BigDecimal amount;
 
-    @NotNull
-    @Lob
-    @Column(name = "direction", nullable = false)
-    private String direction;
+    @Enumerated(EnumType.STRING)
+    private BetStatus status;
 
-    @Column(name = "payout", precision = 10, scale = 2)
+    @Column(precision = 18, scale = 8)
     private BigDecimal payout;
 
-    @NotNull
-    @Lob
-    @Column(name = "status", nullable = false)
-    private String status;
-
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "created_at")
     private Instant createdAt;
-
 }

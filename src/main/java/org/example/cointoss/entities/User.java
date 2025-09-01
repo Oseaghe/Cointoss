@@ -10,6 +10,7 @@ import org.hibernate.annotations.ColumnDefault;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -29,16 +30,19 @@ public class User {
 
     @Size(max = 255)
     @NotNull
-    @Column(name = "password", nullable = false)
-    private String password;
-
-    @ColumnDefault("0.00")
-    @Column(name = "usdt_balance", precision = 10, scale = 2)
-    private BigDecimal usdtBalance;
+    @Column(name = "passwordHash", nullable = false)
+    private String passwordHash;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
     private Instant createdAt;
+
+
+    @Column(name = "updated_at")
+    private Instant updatedAt;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Wallet> wallets;
 
     @OneToMany(mappedBy = "user")
     private Set<Bet> bets = new LinkedHashSet<>();
