@@ -6,6 +6,7 @@ import org.example.cointoss.dtos.UserDto;
 import org.example.cointoss.entities.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
+import org.springframework.context.annotation.Bean;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {

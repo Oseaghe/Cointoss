@@ -8,7 +8,6 @@ import org.example.cointoss.dtos.UpdateUserRequest;
 import org.example.cointoss.dtos.UserDto;
 import org.example.cointoss.mappers.UserMapper;
 import org.example.cointoss.repositories.UserRepository;
-import org.example.cointoss.service.UserService;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +37,7 @@ public class UserController {
                 .toList();
     }
 
-
+    @PostMapping
     public ResponseEntity<?> registerUser(
             @Valid @RequestBody RegisterUserRequest request, UriComponentsBuilder uriBuilder) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -48,9 +47,9 @@ public class UserController {
         }
         var user = userMapper.toEntity(request);
         user = userRepository.save(user);
-        var userVto = userMapper.toDto(user);
+        var userDto = userMapper.toDto(user);
         var uri = uriBuilder.path("/users/{id}").buildAndExpand(user.getId()).toUri();
-        return ResponseEntity.created(uri).build();
+        return ResponseEntity.created(uri).body(userDto);
     }
 
     @PutMapping("/{id}")
