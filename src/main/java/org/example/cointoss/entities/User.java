@@ -32,9 +32,9 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 
-    @ColumnDefault("0.00")
-    @Column(name = "usdt_balance", precision = 10, scale = 2)
-    private BigDecimal usdtBalance;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
+    private Wallet wallet;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
