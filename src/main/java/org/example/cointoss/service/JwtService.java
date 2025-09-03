@@ -3,50 +3,58 @@ package org.example.cointoss.service;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.AllArgsConstructor;
+import org.example.cointoss.config.JwtConfig;
+import org.example.cointoss.entities.Role;
+import org.example.cointoss.entities.User;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 
+@AllArgsConstructor
 @Service
 public class JwtService {
-    @Value("${JWT_SECRET}")
-    private String secret;
+    private final JwtConfig jwtConfig;
 
-    public String generateToken(String email) {
-        final long tokenExpiration = 86400;
-        return Jwts.builder()
-                .subject(email)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 1000 * tokenExpiration))
-                .signWith(Keys.hmacShaKeyFor(secret.getBytes()))
-                .compact();
+    public Jwt generateAccessToken(User user) {
+        return generateToken(user, jwtConfig.getAccessTokenExpiration());
     }
 
-    public boolean validateToken(String token) {
-        try {
-            var claims = getClaims(token);
+    public Jwt generateRefreshToken(User user) {
+        final long tokenExpiration = 604800;  // 7 days
+        return generateToken(user, jwtConfig.getRefreshTokenExpiration());
+    }
 
-            return claims.getExpiration().after(new Date());
-        } catch (JwtException ex) {
-            return false;
+    private Jwt generateToken(User user, long tokenExpiration) {
+       var claims = Jwts.claims()
+                .subject(user.getId().toString())
+                .add("email", user.getEmail())
+                .add("name", user.getName())
+                .add("role", user.getRole())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 1000 * tokenExpiration))
+                .build();
+        return new Jwt(claims, jwtConfig.getSecretKey());
+    }
+
+    public Jwt parseToken(String token){
+        try{
+            var claims = getClaims(token);
+            return new Jwt(claims, jwtConfig.getSecretKey());
+        } catch (JwtException e){
+            return null;
         }
     }
 
     private Claims getClaims(String token) {
         return
                 Jwts.parser()
-                .verifyWith(Keys.hmacShaKeyFor(secret.getBytes()))
+                .verifyWith(jwtConfig.getSecretKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
     }
-
-    public String getEmailFromToken(String token){
-           return getClaims(token).getSubject();
-        }
-
 }
 

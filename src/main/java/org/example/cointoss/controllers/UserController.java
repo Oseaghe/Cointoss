@@ -6,6 +6,7 @@ import org.example.cointoss.dtos.ChangePasswordRequest;
 import org.example.cointoss.dtos.RegisterUserRequest;
 import org.example.cointoss.dtos.UpdateUserRequest;
 import org.example.cointoss.dtos.UserDto;
+import org.example.cointoss.entities.Role;
 import org.example.cointoss.mappers.UserMapper;
 import org.example.cointoss.repositories.UserRepository;
 import org.springframework.data.domain.Sort;
@@ -49,6 +50,7 @@ public class UserController {
         }
         var user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRole(Role.USER);
         user = userRepository.save(user);
         var userDto = userMapper.toDto(user);
         var uri = uriBuilder.path("/users/{id}").buildAndExpand(user.getId()).toUri();

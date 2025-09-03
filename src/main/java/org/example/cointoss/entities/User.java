@@ -37,6 +37,10 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 
+    @Column(name = "role")
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
     @ColumnDefault("0.00")
     @Column(name = "usdt_balance", precision = 10, scale = 2)
     private BigDecimal usdtBalance;
