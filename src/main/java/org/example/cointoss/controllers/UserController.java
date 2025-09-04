@@ -2,10 +2,7 @@ package org.example.cointoss.controllers;
 
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.example.cointoss.dtos.ChangePasswordRequest;
-import org.example.cointoss.dtos.RegisterUserRequest;
-import org.example.cointoss.dtos.UpdateUserRequest;
-import org.example.cointoss.dtos.UserDto;
+import org.example.cointoss.dtos.*;
 import org.example.cointoss.entities.Role;
 import org.example.cointoss.mappers.UserMapper;
 import org.example.cointoss.repositories.UserRepository;
@@ -27,18 +24,20 @@ public class UserController {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
 
-    @GetMapping
-    public Iterable<UserDto> getAllUsers(
-            @RequestParam(required = false, defaultValue = "", name = "sort") String sort
-    ) {
-        if (!Set.of("name", "email").contains(sort))
-            sort = "name";
-
-        return userRepository.findAll(Sort.by(sort))
-                .stream()
-                .map(userMapper::toDto)
-                .toList();
-    }
+    /**
+     * POST /users
+     *
+     * Purpose:
+     * - Registers a new user in the system.
+     * - Validates that the email isn’t already taken.
+     * - Hashes (encodes) the user’s password before saving.
+     * - Assigns the default role USER.
+     * - Returns the newly created user’s details and sets the Location header with their resource URI.
+     *
+     * Who should use this:
+     * - Anyone who wants to sign up for an account.
+     * - Publicly accessible (no authentication required).
+     */
 
     @PostMapping
     public ResponseEntity<?> registerUser(
@@ -57,18 +56,73 @@ public class UserController {
         return ResponseEntity.created(uri).body(userDto);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Object> updateUser(
+    /**
+     * PUT /users/{id}/changeEmail
+     *
+     * Purpose:
+     * - Allows a user to update their email address.
+     * - Loads the user by ID, applies the change, and saves it back.
+     * - Returns the updated user details.
+     *
+     * Who should use this:
+     * - The authenticated user themselves (or possibly an admin).
+     * - Should NOT be open to all users — requires access control to ensure one user
+     *   can’t change another’s email.
+     */
+
+    @PutMapping("/{id}/changeEmail")
+    public ResponseEntity<Object> changeEmail(
             @PathVariable(name = "id") Long id,
-            @RequestBody UpdateUserRequest request) {
+           @Valid @RequestBody UpdateEmailRequest request) {
         var user = userRepository.findById(id).orElse(null);
         if (user == null) {
             return ResponseEntity.notFound().build();
         }
-        userMapper.update(request, user);
+        userMapper.updateEmail(request, user);
         userRepository.save(user);
         return ResponseEntity.ok(userMapper.toDto(user));
     }
+
+    /**
+     * PUT /users/{id}/changeUsername
+     *
+     * Purpose:
+     * - Allows a user to change their username.
+     * - Loads the user by ID, updates their username, and saves it back.
+     * - Returns the updated user details.
+     *
+     * Who should use this:
+     * - The authenticated user themselves (or possibly an admin).
+     * - Requires authorization checks so users can’t update other users’ profiles.
+     */
+
+    @PutMapping({"/{id}/changeUsername"})
+    public ResponseEntity<Object> changeUsername(
+            @PathVariable (name = "id") Long id,
+           @Valid @RequestBody UpdateUsernameRequest request) {
+        var user = userRepository.findById(id).orElse(null);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        userMapper.updateUsername(request,user);
+        userRepository.save(user);
+        return ResponseEntity.ok(userMapper.toDto(user));
+    }
+
+    /**
+     * POST /users/{id}/change-password
+     *
+     * Purpose:
+     * - Allows a user to change their password.
+     * - Requires the user to supply their old password for verification.
+     * - If the old password is correct, stores the new password (hashed).
+     * - Returns 204 No Content if successful.
+     *
+     * Who should use this:
+     * - The authenticated user themselves.
+     * - Critical to protect with authorization checks (to prevent other users or attackers
+     *   from changing someone else’s password).
+     */
 
     @PostMapping("/{id}/change-password")
     public ResponseEntity<Void> changePassword(

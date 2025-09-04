@@ -57,6 +57,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users/*/change-password").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/users/*/changeUsername").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/users/*/changeEmail").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

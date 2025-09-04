@@ -29,6 +29,20 @@ public class AuthController {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
+    /**
+     * POST /auth/login
+     *
+     * Purpose:
+     * - Authenticates a user using email + password.
+     * - If valid, generates both an access token (short-lived) and refresh token (long-lived).
+     * - The refresh token is stored in an HttpOnly cookie (so it can't be accessed by JavaScript).
+     * - Returns the access token to the client in the response body.
+     *
+     * Who should use this:
+     * - Anyone who wants to log in to the application (registered users).
+     * - Publicly accessible, since you can't require authentication before logging in.
+     */
+
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(
             @Valid @RequestBody LoginRequest request,
@@ -53,6 +67,21 @@ public class AuthController {
         return ResponseEntity.ok(new JwtResponse(accessToken.toString()));
     }
 
+
+    /**
+     * POST /auth/refresh
+     *
+     * Purpose:
+     * - Issues a new access token when the old one expires, using the refresh token.
+     * - Reads the refresh token from the secure HttpOnly cookie.
+     * - Verifies that the refresh token is still valid (not expired, not tampered with).
+     * - If valid, generates and returns a new access token.
+     *
+     * Who should use this:
+     * - Authenticated users whose access tokens expired but still have a valid refresh token.
+     * - Publicly accessible in the sense that no access token is required, but only valid refresh tokens can call it.
+     */
+
     @PostMapping("/refresh")
     public ResponseEntity<JwtResponse> refresh(
            @CookieValue(value = "refreshToken") String refreshToken
@@ -67,6 +96,19 @@ public class AuthController {
         return ResponseEntity.ok(new JwtResponse(accessToken.toString()));
     }
 
+    /**
+     * GET /auth/me
+     *
+     * Purpose:
+     * - Returns details about the currently authenticated user.
+     * - Extracts the user ID from the current security context (set by Spring Security after token validation).
+     * - Loads the full user entity and maps it to a UserDto for response.
+     *
+     * Who should use this:
+     * - Only authenticated users with a valid access token.
+     * - Useful for displaying the user's profile in the frontend (e.g., "My Account" page).
+     */
+
     @GetMapping("/me")
     public ResponseEntity<UserDto> me (){
        var authentication= SecurityContextHolder.getContext().getAuthentication();
@@ -79,6 +121,18 @@ public class AuthController {
        var userDto = userMapper.toDto(user);
        return ResponseEntity.ok(userDto);
     }
+
+    /**
+     * Exception Handler for invalid login attempts.
+     *
+     * Purpose:
+     * - Catches BadCredentialsException thrown when authentication fails (wrong email or password).
+     * - Returns HTTP 401 Unauthorized instead of a stack trace.
+     *
+     * Who should use this:
+     * - Not directly called by users. It's automatically triggered if login fails.
+     * - Helps frontend clients handle "invalid credentials" cleanly.
+     */
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Void> handleBadCredentialsException(){
