@@ -1,10 +1,13 @@
+-- This file contains SQL commands to create the initial database schema for the Cointoss application.
+
+-- Use SERIAL for auto-incrementing primary keys in PostgreSQL
 CREATE TABLE users (
                        id BIGSERIAL PRIMARY KEY,
                        email VARCHAR(255) NOT NULL UNIQUE,
                        first_name VARCHAR(255) NOT NULL, -- Removed UNIQUE constraint here as it's likely not intended for first name
                        last_name VARCHAR(255) NOT NULL,  -- Removed UNIQUE constraint here as it's likely not intended for last name
                        password VARCHAR(255) NOT NULL,
-                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Use TIMESTAMPTZ for timezone-aware timestamps
+                       created_at timestamptz DEFAULT CURRENT_TIMESTAMP -- Use TIMESTAMPTZ for timezone-aware timestamps
 );
 
 CREATE TABLE betting_pools (
