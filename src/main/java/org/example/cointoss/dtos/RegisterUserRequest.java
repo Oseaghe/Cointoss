@@ -8,9 +8,13 @@ import org.example.cointoss.validation.Lowercase;
 
 @Data
 public class RegisterUserRequest {
-    @NotBlank(message = "Name is required")
+    @NotBlank(message = "First name is required")
     @Size(max = 255, message = "Name must be less that 255 characters")
-    private String name;
+    private String firstName;
+
+    @NotBlank(message = "Last name is required")
+    @Size(max = 255, message = "Name must be less that 255 characters")
+    private String lastName;
 
     @NotBlank(message = "Email is required")
     @Email(message = "Email must be a valid email address")

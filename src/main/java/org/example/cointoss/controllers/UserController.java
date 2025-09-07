@@ -6,7 +6,6 @@ import org.example.cointoss.dtos.*;
 import org.example.cointoss.entities.Role;
 import org.example.cointoss.mappers.UserMapper;
 import org.example.cointoss.repositories.UserRepository;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Map;
-import java.util.Set;
 
 @AllArgsConstructor
 @RestController
@@ -26,14 +24,14 @@ public class UserController {
 
     /**
      * POST /users
-     *
+
      * Purpose:
      * - Registers a new user in the system.
      * - Validates that the email isn’t already taken.
      * - Hashes (encodes) the user’s password before saving.
      * - Assigns the default role USER.
      * - Returns the newly created user’s details and sets the Location header with their resource URI.
-     *
+
      * Who should use this:
      * - Anyone who wants to sign up for an account.
      * - Publicly accessible (no authentication required).
@@ -58,12 +56,12 @@ public class UserController {
 
     /**
      * PUT /users/{id}/changeEmail
-     *
+
      * Purpose:
      * - Allows a user to update their email address.
      * - Loads the user by ID, applies the change, and saves it back.
      * - Returns the updated user details.
-     *
+
      * Who should use this:
      * - The authenticated user themselves (or possibly an admin).
      * - Should NOT be open to all users — requires access control to ensure one user
@@ -85,12 +83,12 @@ public class UserController {
 
     /**
      * PUT /users/{id}/changeUsername
-     *
+
      * Purpose:
      * - Allows a user to change their username.
      * - Loads the user by ID, updates their username, and saves it back.
      * - Returns the updated user details.
-     *
+
      * Who should use this:
      * - The authenticated user themselves (or possibly an admin).
      * - Requires authorization checks so users can’t update other users’ profiles.
@@ -99,7 +97,7 @@ public class UserController {
     @PutMapping({"/{id}/changeUsername"})
     public ResponseEntity<Object> changeUsername(
             @PathVariable (name = "id") Long id,
-           @Valid @RequestBody UpdateUsernameRequest request) {
+           @Valid @RequestBody UpdateNameRequest request) {
         var user = userRepository.findById(id).orElse(null);
         if (user == null) {
             return ResponseEntity.notFound().build();
@@ -111,13 +109,13 @@ public class UserController {
 
     /**
      * POST /users/{id}/change-password
-     *
+
      * Purpose:
      * - Allows a user to change their password.
      * - Requires the user to supply their old password for verification.
      * - If the old password is correct, stores the new password (hashed).
      * - Returns 204 No Content if successful.
-     *
+
      * Who should use this:
      * - The authenticated user themselves.
      * - Critical to protect with authorization checks (to prevent other users or attackers
