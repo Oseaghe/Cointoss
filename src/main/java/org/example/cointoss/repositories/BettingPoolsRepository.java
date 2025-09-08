@@ -1,0 +1,12 @@
+// src/main/java/org/example/cointoss/repositories/BettingPoolsRepository.java
+package org.example.cointoss.repositories;
+
+import org.example.cointoss.entities.BettingPools;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface BettingPoolsRepository extends JpaRepository<BettingPools, Long> {
+    // This custom query will help us find the latest pool that is currently open for betting.
+    Optional<BettingPools> findFirstByStatusOrderByOpenTimeDesc(String status);
+}

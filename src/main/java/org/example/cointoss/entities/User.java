@@ -43,4 +43,9 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private Set<Bets> bets = new LinkedHashSet<>();
+
+    // Add this inside the User.java class
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Wallet wallet;
 }

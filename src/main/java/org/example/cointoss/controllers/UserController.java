@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.example.cointoss.dtos.*;
 import org.example.cointoss.entities.Role;
+import org.example.cointoss.entities.Wallet;
 import org.example.cointoss.mappers.UserMapper;
 import org.example.cointoss.repositories.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -48,6 +49,14 @@ public class UserController {
         var user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole(Role.USER);
+
+        // 1. Create a new Wallet instance. It starts with the default 100 USDT balance.
+        Wallet newWallet = new Wallet();
+        // 2. Link the wallet to the user.
+        newWallet.setUser(user);
+        // 3. Link the user to the wallet (completing the bidirectional link).
+        user.setWallet(newWallet);
+
         user = userRepository.save(user);
         var userDto = userMapper.toDto(user);
         var uri = uriBuilder.path("/users/{id}").buildAndExpand(user.getId()).toUri();
