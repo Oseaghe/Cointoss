@@ -9,4 +9,8 @@ import java.util.Optional;
 public interface BettingPoolsRepository extends JpaRepository<BettingPools, Long> {
     // This custom query will help us find the latest pool that is currently open for betting.
     Optional<BettingPools> findFirstByStatusOrderByOpenTimeDesc(String status);
+
+    List<BettingPools> findAllByStatusAndLockTimeBefore(String status, OffsetDateTime time);
+    List<BettingPools> findAllByStatusAndSettlementTimeBefore(String status, OffsetDateTime time);
+
 }

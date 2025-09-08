@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class BettingController {
 
     private final BettingService bettingService;
+    private final BettingPoolsRepository bettingPoolsRepository;
 
     @PostMapping
     public ResponseEntity<Void> placeBet(@Valid @RequestBody PlaceBetRequest request) {
@@ -28,4 +29,12 @@ public class BettingController {
             return ResponseEntity.badRequest().header("X-Error-Message", e.getMessage()).build();
         }
     }
+
+
+    @GetMapping("/current-pool")
+    public ResponseEntity<BettingPools> getCurrentPool() {
+        return bettingPoolsRepository.findFirstByStatusOrderByOpenTimeDesc("OPEN")
+            .map(ResponseEntity::ok) // If a pool is found, return it with 200 OK
+            .orElse(ResponseEntity.notFound().build()); // If not found, return 404 Not Found
+}
 }

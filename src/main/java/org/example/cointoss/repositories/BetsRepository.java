@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface BetsRepository extends JpaRepository<Bets, Long> {
     // We can add methods to find bets by user, etc., later.
+    List<Bets> findAllByPoolId(Long poolId);
 }
