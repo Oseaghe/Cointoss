@@ -15,6 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.OffsetDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor // Lombok creates a constructor with all final fields
@@ -24,7 +27,7 @@ public class BettingService {
     private final WalletRepository walletRepository;
     private final BettingPoolsRepository bettingPoolsRepository;
     private final BetsRepository betsRepository;
-    private final CryptoPaymentGateway priceService;
+    private final PriceService priceService;
 
     // This annotation is CRITICAL. It ensures that all database operations within this method
     // either all succeed, or all fail together. This prevents data corruption, like a user's
@@ -85,10 +88,8 @@ public class BettingService {
         // In the future, you could check if another pool is already open.
         // For now, we'll just create a new one.
         String assetPair = "BTC/USDT";
-        BigDecimal startPrice = priceService.getBuyPrice(assetPair)
-                .getData()
-                .getTicker()
-                .getBuy();
+
+        BigDecimal startPrice = priceService.getCurrentPrice(assetPair);
 
         BettingPools newPool = new BettingPools();
         newPool.setAssetPair(assetPair);
@@ -133,11 +134,7 @@ public class BettingService {
      * The core settlement logic for a single pool.
      */
     private void settlePool(BettingPools pool) {
-        BigDecimal endPrice = priceService.getBuyPrice(pool.getAssetPair())
-                .getData()
-                .getTicker()
-                .getBuy();
-                
+        BigDecimal endPrice = priceService.getCurrentPrice(pool.getAssetPair());
         pool.setEndPrice(endPrice);
 
         String winningDirection;

@@ -1,4 +1,10 @@
-// Create a temporary file like src/main/java/org/example/cointoss/controllers/DebugController.java
+package org.example.cointoss.controllers;// Create a temporary file like src/main/java/org/example/cointoss/controllers/DebugController.java
+
+import lombok.RequiredArgsConstructor;
+import org.example.cointoss.scheduler.GameCycleScheduler;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import org.springframework.web.bind.annotation.PostMapping;
 
