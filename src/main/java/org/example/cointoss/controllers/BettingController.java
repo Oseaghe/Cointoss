@@ -4,12 +4,11 @@ package org.example.cointoss.controllers;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.cointoss.dtos.PlaceBetRequest;
+import org.example.cointoss.entities.BettingPools;
+import org.example.cointoss.repositories.BettingPoolsRepository;
 import org.example.cointoss.service.BettingService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/bets")
