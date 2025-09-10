@@ -24,6 +24,7 @@ public class BettingService {
     private final WalletRepository walletRepository;
     private final BettingPoolsRepository bettingPoolsRepository;
     private final BetsRepository betsRepository;
+    private final CryptoPaymentGateway priceService;
 
     // This annotation is CRITICAL. It ensures that all database operations within this method
     // either all succeed, or all fail together. This prevents data corruption, like a user's
@@ -84,7 +85,10 @@ public class BettingService {
         // In the future, you could check if another pool is already open.
         // For now, we'll just create a new one.
         String assetPair = "BTC/USDT";
-        BigDecimal startPrice = priceService.getCurrentPrice(assetPair);
+        BigDecimal startPrice = priceService.getBuyPrice(assetPair)
+                .getData()
+                .getTicker()
+                .getBuy();
 
         BettingPools newPool = new BettingPools();
         newPool.setAssetPair(assetPair);
@@ -129,7 +133,11 @@ public class BettingService {
      * The core settlement logic for a single pool.
      */
     private void settlePool(BettingPools pool) {
-        BigDecimal endPrice = priceService.getCurrentPrice(pool.getAssetPair());
+        BigDecimal endPrice = priceService.getBuyPrice(pool.getAssetPair())
+                .getData()
+                .getTicker()
+                .getBuy();
+                
         pool.setEndPrice(endPrice);
 
         String winningDirection;

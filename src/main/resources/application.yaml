@@ -24,3 +24,7 @@ spring:
     secret: ${JWT_SECRET}
     accessTokenExpiration: 900 # 15 minutes
     RefreshTokenExpiration: 604800 # 7 days
+
+quidax:
+  secretKey: ${QUIDAX_SECRET_KEY}
+  baseUrl: https://app.quidax.io/api/v1

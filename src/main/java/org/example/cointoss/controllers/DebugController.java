@@ -1,5 +1,7 @@
 // Create a temporary file like src/main/java/org/example/cointoss/controllers/DebugController.java
 
+import org.springframework.web.bind.annotation.PostMapping;
+
 @RestController
 @RequestMapping("/debug")
 @RequiredArgsConstructor

@@ -4,6 +4,7 @@ package org.example.cointoss.controllers;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.cointoss.dtos.PlaceBetRequest;
+import org.example.cointoss.repositories.BettingPoolsRepository;
 import org.example.cointoss.service.BettingService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,5 +37,5 @@ public class BettingController {
         return bettingPoolsRepository.findFirstByStatusOrderByOpenTimeDesc("OPEN")
             .map(ResponseEntity::ok) // If a pool is found, return it with 200 OK
             .orElse(ResponseEntity.notFound().build()); // If not found, return 404 Not Found
-}
+    }
 }
