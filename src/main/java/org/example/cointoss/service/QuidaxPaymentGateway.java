@@ -12,10 +12,10 @@ import com.google.gson.Gson;
 
 public class QuidaxPaymentGateway implements CryptoPaymentGateway {
     @Value("${quidax.baseUrl}")
-    private String baseUrl;
+    String baseUrl;
 
     @Value("${quidax.secretKey}")
-    private String apiKey;
+    String apiKey;
 
     @Override
     public TickerResponse getBuyPrice(String marketPair) {
