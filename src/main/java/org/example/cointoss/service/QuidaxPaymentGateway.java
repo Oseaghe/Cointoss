@@ -2,9 +2,11 @@ package org.example.cointoss.service;
 
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 import org.example.cointoss.dtos.TickerResponse;
+import org.springframework.beans.factory.annotation.Value;
 
 import com.google.gson.Gson;
 
