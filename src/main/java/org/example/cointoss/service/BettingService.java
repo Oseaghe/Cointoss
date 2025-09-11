@@ -2,12 +2,12 @@
 package org.example.cointoss.service;
 
 import lombok.RequiredArgsConstructor;
-import org.example.cointoss.entities.Bets;
-import org.example.cointoss.entities.BettingPools;
+import org.example.cointoss.entities.Bet;
+import org.example.cointoss.entities.BettingPool;
 import org.example.cointoss.entities.User;
 import org.example.cointoss.entities.Wallet;
-import org.example.cointoss.repositories.BetsRepository;
-import org.example.cointoss.repositories.BettingPoolsRepository;
+import org.example.cointoss.repositories.BetRepository;
+import org.example.cointoss.repositories.BettingPoolRepository;
 import org.example.cointoss.repositories.UserRepository;
 import org.example.cointoss.repositories.WalletRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,8 +25,8 @@ public class BettingService {
 
     private final UserRepository userRepository;
     private final WalletRepository walletRepository;
-    private final BettingPoolsRepository bettingPoolsRepository;
-    private final BetsRepository betsRepository;
+    private final BettingPoolRepository bettingPoolRepository;
+    private final BetRepository betRepository;
     private final PriceService priceService;
 
     // This annotation is CRITICAL. It ensures that all database operations within this method
@@ -35,13 +35,13 @@ public class BettingService {
     @Transactional
     public void placeBet(Long poolId, BigDecimal amount, String direction) {
         // 1. Get the currently authenticated user's ID from the security context.
-        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = getAuthenticatedUserId();
 
         // 2. Fetch the necessary entities from the database.
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalStateException("User not found"));
 
-        BettingPools pool = bettingPoolsRepository.findById(poolId)
+        BettingPool pool = bettingPoolRepository.findById(poolId)
                 .orElseThrow(() -> new IllegalArgumentException("Betting pool not found"));
 
         // 3. Perform business logic validations.
@@ -63,13 +63,13 @@ public class BettingService {
         walletRepository.save(wallet);
 
         // 5. Create the new bet record.
-        Bets newBet = new Bets();
+        Bet newBet = new Bet();
         newBet.setUser(user);
         newBet.setPool(pool);
         newBet.setAmount(amount);
         newBet.setDirection(direction.toUpperCase());
         newBet.setStatus("PENDING");
-        betsRepository.save(newBet);
+        betRepository.save(newBet);
 
         // 6. Update the pool totals.
         if ("UP".equalsIgnoreCase(direction)) {
@@ -77,7 +77,7 @@ public class BettingService {
         } else {
             pool.setTotalDownPool(pool.getTotalDownPool().add(amount));
         }
-        bettingPoolsRepository.save(pool);
+        bettingPoolRepository.save(pool);
     }
 
     /**
@@ -91,7 +91,7 @@ public class BettingService {
 
         BigDecimal startPrice = priceService.getCurrentPrice(assetPair);
 
-        BettingPools newPool = new BettingPools();
+        BettingPool newPool = new BettingPool();
         newPool.setAssetPair(assetPair);
         newPool.setStatus("OPEN");
         newPool.setStartPrice(startPrice);
@@ -102,7 +102,7 @@ public class BettingService {
         newPool.setLockTime(now.plusMinutes(5));
         newPool.setSettlementTime(now.plusMinutes(10));
 
-        bettingPoolsRepository.save(newPool);
+        bettingPoolRepository.save(newPool);
         System.out.println("Created new betting pool with start price: " + startPrice);
     }
 
@@ -111,10 +111,10 @@ public class BettingService {
      */
     @Transactional
     public void lockDuePools() {
-        List<BettingPools> poolsToLock = bettingPoolsRepository.findAllByStatusAndLockTimeBefore("OPEN", OffsetDateTime.now());
-        for (BettingPools pool : poolsToLock) {
+        List<BettingPool> poolsToLock = bettingPoolRepository.findAllByStatusAndLockTimeBefore("OPEN", OffsetDateTime.now());
+        for (BettingPool pool : poolsToLock) {
             pool.setStatus("LOCKED");
-            bettingPoolsRepository.save(pool);
+            bettingPoolRepository.save(pool);
             System.out.println("Locked pool with ID: " + pool.getId());
         }
     }
@@ -124,8 +124,8 @@ public class BettingService {
      */
     @Transactional
     public void settleDuePools() {
-        List<BettingPools> poolsToSettle = bettingPoolsRepository.findAllByStatusAndSettlementTimeBefore("LOCKED", OffsetDateTime.now());
-        for (BettingPools pool : poolsToSettle) {
+        List<BettingPool> poolsToSettle = bettingPoolRepository.findAllByStatusAndSettlementTimeBefore("LOCKED", OffsetDateTime.now());
+        for (BettingPool pool : poolsToSettle) {
             settlePool(pool);
         }
     }
@@ -133,7 +133,7 @@ public class BettingService {
     /**
      * The core settlement logic for a single pool.
      */
-    private void settlePool(BettingPools pool) {
+    private void settlePool(BettingPool pool) {
         BigDecimal endPrice = priceService.getCurrentPrice(pool.getAssetPair());
         pool.setEndPrice(endPrice);
 
@@ -151,9 +151,9 @@ public class BettingService {
         BigDecimal winningSideTotal = "UP".equals(winningDirection) ? pool.getTotalUpPool() : pool.getTotalDownPool();
 
         // Find all bets for this pool
-        List<Bets> betsInPool = betsRepository.findAllByPoolId(pool.getId());
+        List<Bet> betsInPool = betRepository.findAllByPoolId(pool.getId());
 
-        for (Bets bet : betsInPool) {
+        for (Bet bet : betsInPool) {
             if (bet.getDirection().equals(winningDirection)) {
                 // This is a winning bet
                 if (winningSideTotal.compareTo(BigDecimal.ZERO) > 0) {
@@ -180,11 +180,30 @@ public class BettingService {
                 bet.setStatus("LOST");
                 bet.setPayout(BigDecimal.ZERO);
             }
-            betsRepository.save(bet);
+            betRepository.save(bet);
         }
 
         pool.setStatus("SETTLED");
-        bettingPoolsRepository.save(pool);
+        bettingPoolRepository.save(pool);
         System.out.println("Settled pool ID " + pool.getId() + " with end price " + endPrice + ". Winning direction: " + winningDirection);
+    }
+
+    /**
+     * Safely extract the authenticated user's ID from the security context.
+     * Throws IllegalStateException if not found or invalid.
+     */
+    private Long getAuthenticatedUserId() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof Long) {
+            return (Long) principal;
+        } else if (principal instanceof org.springframework.security.core.userdetails.UserDetails userDetails) {
+            // If using UserDetails, fetch user by email/username
+            String email = userDetails.getUsername();
+            return userRepository.findByEmail(email)
+                    .map(User::getId)
+                    .orElseThrow(() -> new IllegalStateException("User not found for email: " + email));
+        } else {
+            throw new IllegalStateException("Invalid authentication principal type: " + principal.getClass().getName());
+        }
     }
 }

@@ -42,9 +42,7 @@ public class User {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @OneToMany(mappedBy = "user")
-    private Set<Bets> bets = new LinkedHashSet<>();
-
-    // Add this inside the User.java class
+    private Set<Bet> bets = new LinkedHashSet<>();
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Wallet wallet;

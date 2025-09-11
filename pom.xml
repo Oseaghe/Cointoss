@@ -90,11 +90,7 @@
             <artifactId>spring-dotenv</artifactId>
             <version>4.0.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
-        </dependency>
+    <!-- Removed duplicate org.postgresql:postgresql dependency -->
 
         <!-- MapStruct -->
         <dependency>
@@ -131,16 +127,8 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-database-postgresql</artifactId>
-            <version>11.11.2</version>
-        </dependency>
-        <dependency>
-            <groupId>me.paulschwarz</groupId>
-            <artifactId>spring-dotenv</artifactId>
-            <version>4.0.0</version>
-        </dependency>
+    <!-- Removed duplicate org.flywaydb:flyway-database-postgresql dependency -->
+    <!-- Removed duplicate me.paulschwarz:spring-dotenv dependency -->
 
         <dependency>
             <groupId>com.google.code.gson</groupId>

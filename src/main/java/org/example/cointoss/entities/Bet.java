@@ -10,7 +10,7 @@ import java.time.OffsetDateTime;
 @Setter
 @Entity
 @Table(name = "bets")
-public class Bets {
+public class Bet {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -21,7 +21,7 @@ public class Bets {
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "pool_id", nullable = false)
-    private BettingPools pool;
+    private BettingPool pool;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;

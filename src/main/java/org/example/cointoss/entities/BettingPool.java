@@ -11,7 +11,7 @@ import java.time.OffsetDateTime;
 @Setter
 @Entity
 @Table(name="betting_pools")
-public class BettingPools {
+public class BettingPool {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
