@@ -85,5 +85,86 @@ class BettingServiceTest {
         assertTrue(ex.getMessage().contains("Insufficient funds"));
     }
 
-    // Add more tests for closed period, invalid direction, etc.
+    @Test
+    void placeBet_fails_whenBettingPoolNotFound() {
+        User user = new User(); user.setId(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bettingPoolRepository.findById(10L)).thenReturn(Optional.empty());
+        Exception ex = assertThrows(IllegalArgumentException.class, () ->
+                bettingService.placeBet(10L, new BigDecimal("10.00"), "UP"));
+        assertTrue(ex.getMessage().contains("Betting pool not found"));
+    }
+
+    @Test
+    void placeBet_fails_whenUserNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+        when(bettingPoolRepository.findById(10L)).thenReturn(Optional.of(new BettingPool()));
+        Exception ex = assertThrows(IllegalStateException.class, () ->
+                bettingService.placeBet(10L, new BigDecimal("10.00"), "UP"));
+        assertTrue(ex.getMessage().contains("User not found"));
+    }
+
+    @Test
+    void placeBet_fails_whenPoolNotOpen() {
+        User user = new User(); user.setId(1L);
+        BettingPool pool = new BettingPool(); pool.setId(10L); pool.setStatus("CLOSED");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bettingPoolRepository.findById(10L)).thenReturn(Optional.of(pool));
+        Exception ex = assertThrows(IllegalStateException.class, () ->
+                bettingService.placeBet(10L, new BigDecimal("10.00"), "UP"));
+        assertTrue(ex.getMessage().contains("not open for bets"));
+    }
+
+    @Test
+    void placeBet_fails_whenOutsideOpenPeriod_beforeOpen() {
+        User user = new User(); user.setId(1L);
+        BettingPool pool = new BettingPool(); pool.setId(10L); pool.setStatus("OPEN");
+        pool.setOpenTime(OffsetDateTime.now().plusMinutes(5));
+        pool.setLockTime(OffsetDateTime.now().plusMinutes(10));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bettingPoolRepository.findById(10L)).thenReturn(Optional.of(pool));
+        Exception ex = assertThrows(IllegalStateException.class, () ->
+                bettingService.placeBet(10L, new BigDecimal("10.00"), "UP"));
+        assertTrue(ex.getMessage().contains("only allowed during the open period"));
+    }
+
+    @Test
+    void placeBet_fails_whenOutsideOpenPeriod_afterLock() {
+        User user = new User(); user.setId(1L);
+        BettingPool pool = new BettingPool(); pool.setId(10L); pool.setStatus("OPEN");
+        pool.setOpenTime(OffsetDateTime.now().minusMinutes(10));
+        pool.setLockTime(OffsetDateTime.now().minusMinutes(5));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bettingPoolRepository.findById(10L)).thenReturn(Optional.of(pool));
+        Exception ex = assertThrows(IllegalStateException.class, () ->
+                bettingService.placeBet(10L, new BigDecimal("10.00"), "UP"));
+        assertTrue(ex.getMessage().contains("only allowed during the open period"));
+    }
+
+    @Test
+    void placeBet_fails_whenInvalidDirection() {
+        User user = new User(); user.setId(1L);
+        BettingPool pool = new BettingPool(); pool.setId(10L); pool.setStatus("OPEN");
+        pool.setOpenTime(OffsetDateTime.now().minusMinutes(1));
+        pool.setLockTime(OffsetDateTime.now().plusMinutes(4));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bettingPoolRepository.findById(10L)).thenReturn(Optional.of(pool));
+        Exception ex = assertThrows(IllegalArgumentException.class, () ->
+                bettingService.placeBet(10L, new BigDecimal("10.00"), "SIDEWAYS"));
+        assertTrue(ex.getMessage().contains("Invalid direction"));
+    }
+
+    @Test
+    void placeBet_fails_whenWalletNotFound() {
+        User user = new User(); user.setId(1L);
+        BettingPool pool = new BettingPool(); pool.setId(10L); pool.setStatus("OPEN");
+        pool.setOpenTime(OffsetDateTime.now().minusMinutes(1));
+        pool.setLockTime(OffsetDateTime.now().plusMinutes(4));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bettingPoolRepository.findById(10L)).thenReturn(Optional.of(pool));
+        when(walletRepository.findByUserId(1L)).thenReturn(Optional.empty());
+        Exception ex = assertThrows(IllegalStateException.class, () ->
+                bettingService.placeBet(10L, new BigDecimal("10.00"), "UP"));
+        assertTrue(ex.getMessage().contains("Wallet not found"));
+    }
 }
