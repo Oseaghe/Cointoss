@@ -34,19 +34,21 @@ public class BettingService {
     // balance being debited without their bet being recorded.
     @Transactional
     public void placeBet(Long poolId, BigDecimal amount, String direction) {
-        // 1. Get the currently authenticated user's ID from the security context.
         Long userId = getAuthenticatedUserId();
-
-        // 2. Fetch the necessary entities from the database.
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalStateException("User not found"));
-
         BettingPool pool = bettingPoolRepository.findById(poolId)
                 .orElseThrow(() -> new IllegalArgumentException("Betting pool not found"));
 
-        // 3. Perform business logic validations.
+        // Validate pool status and open period
+        OffsetDateTime now = OffsetDateTime.now();
         if (!"OPEN".equals(pool.getStatus())) {
             throw new IllegalStateException("Betting pool is not open for bets.");
+        }
+        if (pool.getOpenTime() != null && pool.getLockTime() != null) {
+            if (now.isBefore(pool.getOpenTime()) || !now.isBefore(pool.getLockTime())) {
+                throw new IllegalStateException("Betting is only allowed during the open period.");
+            }
         }
         if (!"UP".equalsIgnoreCase(direction) && !"DOWN".equalsIgnoreCase(direction)) {
             throw new IllegalArgumentException("Invalid direction. Must be 'UP' or 'DOWN'.");
