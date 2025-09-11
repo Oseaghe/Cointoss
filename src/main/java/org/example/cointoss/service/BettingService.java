@@ -189,6 +189,115 @@ public class BettingService {
     }
 
     /**
+     * Settle a betting pool: determine outcome, handle edge cases, calculate payouts, and update wallets.
+     */
+    @Transactional
+    public void settlePool(Long poolId) {
+        BettingPool pool = bettingPoolRepository.findById(poolId)
+                .orElseThrow(() -> new IllegalArgumentException("Betting pool not found"));
+
+        // Only settle if not already settled
+        if ("SETTLED".equals(pool.getStatus())) {
+            throw new IllegalStateException("Pool already settled");
+        }
+
+        // Fetch all bets for this pool
+        List<Bet> bets = betRepository.findAllByPoolId(poolId);
+        if (bets.isEmpty()) {
+            pool.setStatus("CANCELED");
+            bettingPoolRepository.save(pool);
+            return;
+        }
+
+        // Fetch start and end prices
+        BigDecimal startPrice = pool.getStartPrice();
+        BigDecimal endPrice = pool.getEndPrice();
+        if (startPrice == null || endPrice == null) {
+            // Price fetch failed, refund all bets
+            for (Bet bet : bets) {
+                refundBet(bet);
+            }
+            pool.setStatus("CANCELED");
+            bettingPoolRepository.save(pool);
+            return;
+        }
+
+        // Edge case: PUSH (tie)
+        if (startPrice.compareTo(endPrice) == 0) {
+            for (Bet bet : bets) {
+                refundBet(bet);
+            }
+            pool.setStatus("SETTLED");
+            bettingPoolRepository.save(pool);
+            return;
+        }
+
+        // Edge case: all bets on one side
+        boolean allUp = bets.stream().allMatch(b -> "UP".equalsIgnoreCase(b.getDirection()));
+        boolean allDown = bets.stream().allMatch(b -> "DOWN".equalsIgnoreCase(b.getDirection()));
+        if (allUp || allDown) {
+            for (Bet bet : bets) {
+                refundBet(bet);
+            }
+            pool.setStatus("CANCELED");
+            bettingPoolRepository.save(pool);
+            return;
+        }
+
+        // Determine outcome
+        String outcome = endPrice.compareTo(startPrice) > 0 ? "UP" : "DOWN";
+        pool.setStatus("SETTLED");
+        bettingPoolRepository.save(pool);
+
+        // Calculate pools and commission
+        BigDecimal totalUp = pool.getTotalUpPool();
+        BigDecimal totalDown = pool.getTotalDownPool();
+        BigDecimal totalPool = totalUp.add(totalDown);
+        BigDecimal commission = totalPool.multiply(BigDecimal.valueOf(0.05)).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal payoutPool = totalPool.subtract(commission);
+
+        // Calculate dynamic payout multiplier
+        BigDecimal winnerPool = "UP".equals(outcome) ? totalUp : totalDown;
+        BigDecimal loserPool = "UP".equals(outcome) ? totalDown : totalUp;
+        BigDecimal multiplier = winnerPool.compareTo(BigDecimal.ZERO) > 0
+                ? payoutPool.divide(winnerPool, 6, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
+        // Settle each bet
+        for (Bet bet : bets) {
+            if (outcome.equalsIgnoreCase(bet.getDirection())) {
+                // Winner
+                BigDecimal payout = bet.getAmount().multiply(multiplier).setScale(2, RoundingMode.HALF_UP);
+                creditWinnings(bet, payout);
+                bet.setStatus("WON");
+                bet.setPayout(payout);
+            } else {
+                // Loser
+                bet.setStatus("LOST");
+                bet.setPayout(BigDecimal.ZERO);
+            }
+            betRepository.save(bet);
+        }
+    }
+
+    private void refundBet(Bet bet) {
+        Wallet wallet = walletRepository.findByUserId(bet.getUser().getId())
+                .orElseThrow(() -> new IllegalStateException("Wallet not found for user"));
+        wallet.setBalance(wallet.getBalance().add(bet.getAmount()));
+        walletRepository.save(wallet);
+        bet.setStatus("REFUNDED");
+        bet.setPayout(bet.getAmount());
+        betRepository.save(bet);
+    }
+
+    private void creditWinnings(Bet bet, BigDecimal payout) {
+        Wallet wallet = walletRepository.findByUserId(bet.getUser().getId())
+                .orElseThrow(() -> new IllegalStateException("Wallet not found for user"));
+        wallet.setBalance(wallet.getBalance().add(payout));
+        walletRepository.save(wallet);
+    }
+
+    /**
      * Safely extract the authenticated user's ID from the security context.
      * Throws IllegalStateException if not found or invalid.
      */
