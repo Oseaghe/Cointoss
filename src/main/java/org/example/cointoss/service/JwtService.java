@@ -28,14 +28,14 @@ public class JwtService {
     }
 
     private Jwt generateToken(User user, long tokenExpiration) {
-       var claims = Jwts.claims()
-                .subject(user.getId().toString())
-                .add("email", user.getEmail())
-                .add("name", user.getFirstName() + " " + user.getLastName())
-                .add("role", user.getRole())
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 1000 * tokenExpiration))
-                .build();
+    var claims = Jwts.claims()
+          .subject(user.getId().toString())
+          .add("email", user.getEmail())
+          .add("name", user.getFirstName() + " " + user.getLastName())
+          .add("role", user.getRole().name())
+          .issuedAt(new Date())
+          .expiration(new Date(System.currentTimeMillis() + 1000 * tokenExpiration))
+          .build();
         return new Jwt(claims, jwtConfig.getSecretKey());
     }
 
