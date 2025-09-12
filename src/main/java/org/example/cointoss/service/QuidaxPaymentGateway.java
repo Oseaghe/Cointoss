@@ -2,18 +2,19 @@ package org.example.cointoss.service;
 
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 import org.example.cointoss.dtos.TickerResponse;
 
 import com.google.gson.Gson;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
+@Service
 public class QuidaxPaymentGateway implements CryptoPaymentGateway {
     @Value("${quidax.baseUrl}")
     private String baseUrl;
-
-    @Value("${quidax.secretKey}")
-    private String apiKey;
 
     @Override
     public TickerResponse getBuyPrice(String marketPair) {
