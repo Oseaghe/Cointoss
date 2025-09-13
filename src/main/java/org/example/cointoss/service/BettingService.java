@@ -2,6 +2,7 @@
 package org.example.cointoss.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.cointoss.dtos.PoolUpdateDto; 
 import org.example.cointoss.entities.Bets;
 import org.example.cointoss.entities.BettingPools;
 import org.example.cointoss.entities.User;
@@ -10,6 +11,7 @@ import org.example.cointoss.repositories.BetsRepository;
 import org.example.cointoss.repositories.BettingPoolsRepository;
 import org.example.cointoss.repositories.UserRepository;
 import org.example.cointoss.repositories.WalletRepository;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,7 @@ public class BettingService {
     private final BettingPoolsRepository bettingPoolsRepository;
     private final BetsRepository betsRepository;
     private final CryptoPaymentGateway priceService;
+     private final SimpMessagingTemplate messagingTemplate;
 
     // This annotation is CRITICAL. It ensures that all database operations within this method
     // either all succeed, or all fail together. This prevents data corruption, like a user's
@@ -76,12 +79,26 @@ public class BettingService {
         } else {
             pool.setTotalDownPool(pool.getTotalDownPool().add(amount));
         }
-        bettingPoolsRepository.save(pool);
+        
+        BettingPools updatedPool = bettingPoolsRepository.save(pool);
+
+        broadcastPoolUpdate(updatedPool);
     }
 
-    /**
-     * Creates a new betting pool for the next 10-minute cycle.
-     */
+
+    private void broadcastPoolUpdate(BettingPools pool) {
+        PoolUpdateDto updateDto = new PoolUpdateDto(
+                pool.getId(),
+                pool.getTotalUpPool(),
+                pool.getTotalDownPool()
+        );
+        // This sends the DTO to the specific topic for this pool.
+        // Any client subscribed to this topic will receive the message instantly.
+        messagingTemplate.convertAndSend("/topic/pool/" + pool.getId(), updateDto);
+        System.out.println("WEBSOCKET: Broadcasted update for pool ID " + pool.getId());
+    }
+
+
     @Transactional
     public void createNextPool() {
         // In the future, you could check if another pool is already open.
