@@ -13,14 +13,14 @@ This checklist provides a step-by-step guide to building the Cointoss betting pl
 
 ## 2. User Authentication & Wallet Module
 
--   [ ] Design User and Wallet data models
--   [ ] Implement user registration API (`POST /api/auth/register`)
--   [ ] Implement user login API (`POST /api/auth/login`)
--   [ ] Hash and securely store user passwords
--   [ ] Implement JWT or session-based authentication
+-   [x] Design User and Wallet data models
+-   [x] Implement user registration API (`POST /api/auth/register`)
+-   [x] Implement user login API (`POST /api/auth/login`)
+-   [x] Hash and securely store user passwords
+-   [x] Implement JWT or session-based authentication
 -   [ ] Automatically create and credit mock wallet on registration
 -   [ ] Implement wallet balance API (`GET /api/wallet/balance`)
--   [ ] Create migration scripts for User and Wallet tables
+-   [X] Create migration scripts for User and Wallet tables
 -   [ ] Write unit tests for authentication and wallet logic
 
 ## 3. Betting Game Engine Module
