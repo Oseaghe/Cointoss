@@ -25,6 +25,13 @@ spring:
     accessTokenExpiration: 900 # 15 minutes
     RefreshTokenExpiration: 604800 # 7 days
 
+server:
+  port: 8081
+
 quidax:
   secretKey: ${QUIDAX_SECRET_KEY}
   baseUrl: https://app.quidax.io/api/v1
+
+kora:
+    secretKey: ${KORA_SECRET_KEY}
+    baseUrl: https://api.korapay.com/merchant/api/v1
