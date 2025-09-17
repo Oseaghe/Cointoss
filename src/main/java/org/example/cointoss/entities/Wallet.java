@@ -67,6 +67,13 @@ public class Wallet {
                         account.getAccountNumber().equals(accountNumber));
     }
 
+    public void deposit(BigDecimal amount) {
+        balance = balance.add(amount);
+    }
+
+    public void withdraw(BigDecimal amount) {
+        balance = balance.subtract(amount);
+    }
     public boolean hasSufficientBalance(BigDecimal amount) {
         return balance.compareTo(amount) >= 0;
     }

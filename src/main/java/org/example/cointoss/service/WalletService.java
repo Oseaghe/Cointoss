@@ -1,6 +1,5 @@
 package org.example.cointoss.service;
 
-
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.cointoss.dtos.*;

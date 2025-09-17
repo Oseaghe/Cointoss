@@ -1,5 +1,5 @@
 package org.example.cointoss.entities;
 
 public enum TransactionStatus {
-    PENDING, PAID, EXPIRED
+    PENDING, EXPIRED, FAILED, SUCCESS
 }

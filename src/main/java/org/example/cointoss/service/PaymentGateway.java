@@ -15,4 +15,5 @@ public interface PaymentGateway {
     VerifyPayoutResponse verifyPayout(
             String transactionRef);
 
+    void handleWebhook(KorapayWebhookEvent webhookEvent);
 }

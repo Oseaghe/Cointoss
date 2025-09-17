@@ -65,6 +65,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/debug/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/wallets/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/wallets/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/webhook/korapay").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )

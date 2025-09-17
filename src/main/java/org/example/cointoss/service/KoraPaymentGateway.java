@@ -3,10 +3,17 @@ package org.example.cointoss.service;
 import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
 import org.example.cointoss.dtos.*;
-import org.example.cointoss.mappers.WalletMapper;
+import org.example.cointoss.entities.Transaction;
+import org.example.cointoss.entities.TransactionStatus;
+import org.example.cointoss.exceptions.TransactionNotFoundException;
+import org.example.cointoss.exceptions.WalletNotFoundException;
+import org.example.cointoss.repositories.TransactionRepository;
+import org.example.cointoss.repositories.WalletRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -15,7 +22,8 @@ import java.net.http.HttpResponse;
 @Service
 @RequiredArgsConstructor
 public class KoraPaymentGateway implements PaymentGateway {
-    private final WalletMapper walletMapper;
+    private final TransactionRepository transactionRepository;
+    private final WalletRepository walletRepository;
 
     @Value("${kora.secretKey}")
     private String secretKey;
@@ -61,7 +69,7 @@ public class KoraPaymentGateway implements PaymentGateway {
                     .currency("NGN") // hardcode or set dynamically
                     .redirectUrl("https://yourapp.com/redirect") // replace with your value
                     .merchantBearsCost(false) // set based on business rule
-                    .notificationUrl("https://yourapp.com/webhook") // replace with your value
+                    .notificationUrl("https://6fa0fc6fbb68.ngrok-free.app/api/webhook/korapay") // replace with your value
                     .customer(
                             CheckoutRequest.Customer.builder()
                                     .name(fundRequest.getCustomerName())
@@ -164,4 +172,58 @@ public class KoraPaymentGateway implements PaymentGateway {
         }
         return null;
     }
-}
+
+    @Override
+    @Transactional
+    public void handleWebhook(KorapayWebhookEvent webhookEvent) {
+        String reference = webhookEvent.getData().getReference();
+        BigDecimal webhookAmount = webhookEvent.getData().getAmount();
+        BigDecimal webhookFee = webhookEvent.getData().getFee();
+
+
+        Transaction transaction = transactionRepository.findByTransactionReference(reference)
+                .orElse(null);
+
+        if (transaction == null) {
+            throw new TransactionNotFoundException();
+        }
+
+        var wallet = walletRepository.findById(transaction.getWallet().getId())
+                .orElse(null);
+
+        if (wallet == null) {
+            throw new WalletNotFoundException();
+        }
+
+        // ✅ Accept if webhook amount >= transaction amount
+        if (transaction.getAmount() == null || webhookAmount == null) {
+            transaction.setTransactionStatus(TransactionStatus.FAILED);
+            transactionRepository.save(transaction);
+            return;
+        }
+
+        if (webhookAmount.compareTo(transaction.getAmount()) < 0) {
+            transaction.setTransactionStatus(TransactionStatus.FAILED);
+            transactionRepository.save(transaction);
+            return;
+        }
+
+        // Update status based on event
+        if ("transfer.success".equals(webhookEvent.getEvent())) {
+            var totalAmount = webhookAmount.add(webhookFee);
+            wallet.withdraw(totalAmount); // get amount + transaction fee
+            transaction.setTransactionStatus(TransactionStatus.SUCCESS);
+        }
+        else if ("charge.success".equals(webhookEvent.getEvent())) {
+            wallet.deposit(transaction.getAmount());
+            transaction.setTransactionStatus(TransactionStatus.SUCCESS);
+        }
+        else if ("transfer.failed".equals(webhookEvent.getEvent()) || "charge.failed".equals(webhookEvent.getEvent())) {
+            transaction.setTransactionStatus(TransactionStatus.FAILED);
+        }
+        else {
+            System.out.println("⚠️ Unhandled Korapay event: " + webhookEvent.getEvent());
+        }
+        walletRepository.save(wallet);
+        transactionRepository.save(transaction);
+    }}
