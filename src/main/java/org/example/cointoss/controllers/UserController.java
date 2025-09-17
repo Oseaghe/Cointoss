@@ -17,7 +17,7 @@ import java.util.Map;
 
 @AllArgsConstructor
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class UserController {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
@@ -50,7 +50,7 @@ public class UserController {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole(Role.USER);
 
-        // 1. Create a new Wallet instance. It starts with the default 100 USDT balance.
+        // 1. Create a new Wallet instance. It starts with the default 100 NGN balance.
         Wallet newWallet = new Wallet();
         // 2. Link the wallet to the user.
         newWallet.setUser(user);
