@@ -16,7 +16,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // This registers a WebSocket endpoint that clients will connect to.
         // "/ws" is the URL for the WebSocket handshake.
         // .setAllowedOriginPatterns("*") allows connections from any origin (useful for development).
-        registry.addEndpoint("/ws").setAllowedOriginPatterns("*");
+        registry.addEndpoint("/ws").setAllowedOrigins("https://coin-toss-tw57.vercel.app");
     }
 
     @Override
